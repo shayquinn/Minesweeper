@@ -137,14 +137,11 @@ class SpriteGrid(Widget):
     def on_touch_down(self, touch):     
         
         if self.x <= touch.x <= self.x + self.width and self.y <= touch.y <= self.y + self.height:
-            #print("on_touch_down") 
-
             
             array_x = int(touch.x // sprite_size)
             array_y = int(touch.y // sprite_size)
             global game_over
-            if game_over != True:
-                #print(f"selected_map: {selected_map[array_y][array_x]}")  
+            if game_over != True: 
                 global sound1             
                 if touch.button == 'left':
                     if(selected_map[array_y][array_x] == 1):
@@ -157,17 +154,14 @@ class SpriteGrid(Widget):
                             game_over = True
                             selected_map[array_y][array_x] = 4
                             self.update_screen()
-                            #print("Game Over")
                         elif map[array_y][array_x] == 0:
                             selected_map[array_y][array_x] = 0
                             self.find_zero_cells(array_y, array_x)
                             self.update_screen()
                             sound3.play()
-                            #print("Find zeros")
                         else:
                             selected_map[array_y][array_x] = 0
-                            self.update_screen()
-                            #print(f"Touch down on sprite at array position {array_x}, {array_y}")  
+                            self.update_screen() 
                     # check not_mine_count
                     count = 0
                     for row in selected_map:
@@ -180,7 +174,6 @@ class SpriteGrid(Widget):
                         you_win = True
                         sound4.play()
                     self.update_screen()
-                    #print(f"not_mine_count: {self.not_mine_count} count: {count}")
 
                 elif touch.button == 'right':           
                     if(selected_map[array_y][array_x] != 0):
@@ -191,13 +184,10 @@ class SpriteGrid(Widget):
                             sound1.play() 
                         if(selected_map[array_y][array_x] == 1):
                             selected_map[array_y][array_x] = 2
-                            #print(f"Touch down on sprite at array position {array_x}, {array_y}")
                         elif(selected_map[array_y][array_x] == 2):
                             selected_map[array_y][array_x] = 3      
-                            #print(f"Touch down on sprite at array position {array_x}, {array_y}")
                         elif(selected_map[array_y][array_x] == 3):
                             selected_map[array_y][array_x] = 1
-                            #print(f"Touch down on sprite at array position {array_x}, {array_y}")
                         
                     self.update_screen()           
                     # check flaged_cells   
@@ -208,7 +198,6 @@ class SpriteGrid(Widget):
                                 flaged += 1
                     global flaged_cells
                     flaged_cells = self.mine_count - flaged
-                    #print(f"flaged_cells: {flaged_cells}")
                     flag_label.text = 'Flags: {}'.format(flaged_cells) 
                 
             return True
@@ -430,7 +419,6 @@ class App(App):
 
     def option1(self, instance):
         self.init_sprite_grid()
-        #print('Restart')
 
     def option2(self, instance):
         global dropdown
@@ -445,22 +433,18 @@ class App(App):
             num_rows = 9   
             num_cols = 16
             self.init_sprite_grid()
-            #print('Resize')
         elif btn.text == 'Medium':  
             num_rows = 16
             num_cols = 16
             self.init_sprite_grid()
-            #print('Resize')
         elif btn.text == 'Hard':
             num_rows = 20
             num_cols = 30
             self.init_sprite_grid()
-            #print('Resize')
         elif btn.text == 'Expert':
             num_rows = 33
             num_cols = 40
             self.init_sprite_grid()
-            #print('Resize')
         
        
 
