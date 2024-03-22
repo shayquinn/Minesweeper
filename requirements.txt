@@ -1,0 +1,4 @@
+REQUIREMENTS
+You need Python installed.
+You need the package venv installed.
+You need the package Kivy installed.
