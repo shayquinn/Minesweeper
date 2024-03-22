@@ -137,14 +137,14 @@ class SpriteGrid(Widget):
     def on_touch_down(self, touch):     
         
         if self.x <= touch.x <= self.x + self.width and self.y <= touch.y <= self.y + self.height:
-            print("on_touch_down") 
+            #print("on_touch_down") 
 
             
             array_x = int(touch.x // sprite_size)
             array_y = int(touch.y // sprite_size)
             global game_over
             if game_over != True:
-                print(f"selected_map: {selected_map[array_y][array_x]}")  
+                #print(f"selected_map: {selected_map[array_y][array_x]}")  
                 global sound1             
                 if touch.button == 'left':
                     if(selected_map[array_y][array_x] == 1):
@@ -430,7 +430,7 @@ class App(App):
 
     def option1(self, instance):
         self.init_sprite_grid()
-        print('Restart')
+        #print('Restart')
 
     def option2(self, instance):
         global dropdown
@@ -445,22 +445,22 @@ class App(App):
             num_rows = 9   
             num_cols = 16
             self.init_sprite_grid()
-            print('Resize')
+            #print('Resize')
         elif btn.text == 'Medium':  
             num_rows = 16
             num_cols = 16
             self.init_sprite_grid()
-            print('Resize')
+            #print('Resize')
         elif btn.text == 'Hard':
             num_rows = 20
             num_cols = 30
             self.init_sprite_grid()
-            print('Resize')
+            #print('Resize')
         elif btn.text == 'Expert':
             num_rows = 33
             num_cols = 40
             self.init_sprite_grid()
-            print('Resize')
+            #print('Resize')
         
        
 
