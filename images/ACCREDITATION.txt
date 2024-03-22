@@ -1,0 +1,4 @@
+File Name: gaming_SpriteSheet.png
+Owner: Dave Astels
+Source: https://learn.adafruit.com/assets/79214
+License: CC BY 3.0 (See accompanying license file in this folder)
