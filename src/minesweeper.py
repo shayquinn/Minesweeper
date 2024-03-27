@@ -134,75 +134,97 @@ class SpriteGrid(Widget):
                 checked_cells.update(new_neighbours)
 
     
-    def on_touch_down(self, touch):     
-        
-        if self.x <= touch.x <= self.x + self.width and self.y <= touch.y <= self.y + self.height:
-            
-            array_x = int(touch.x // sprite_size)
-            array_y = int(touch.y // sprite_size)
-            global game_over
-            if game_over != True: 
-                global sound1             
-                if touch.button == 'left':
-                    if(selected_map[array_y][array_x] == 1):
-                        if sound1.state != 'play':
-                            sound1.play()
-                        else:
-                            sound1.stop()
-                            sound1.play() 
-                        if(map[array_y][array_x] == 9):      
-                            game_over = True
-                            selected_map[array_y][array_x] = 4
-                            self.update_screen()
-                        elif map[array_y][array_x] == 0:
-                            selected_map[array_y][array_x] = 0
-                            self.find_zero_cells(array_y, array_x)
-                            self.update_screen()
-                            sound3.play()
-                        else:
-                            selected_map[array_y][array_x] = 0
-                            self.update_screen() 
-                    # check not_mine_count
-                    count = 0
-                    for row in selected_map:
-                        for i in row:
-                            if i == 0:
-                                count += 1
-                    if count == self.not_mine_count:
-                        game_over = True
-                        global you_win
-                        you_win = True
-                        sound4.play()
-                    self.update_screen()
+        def remove_equal_mine_number(self):
+        global map
+        global selected_map
+        return_vale = False
+        for i in range(len(map)):
+            for j in range(len(map[0])):
+                n, mn = self.neighbours(False, "not_open", i, j), self.neighbours(False, "mine", i, j)
+                if map[i][j] == len(mn):
+                    if map[i][j] < len(n):
+                        return_vale = True
+                        for (x, y) in self.merge_lists_remove_duplicates(n, mn):
+                            selected_map[x][y] = 0
+        return return_vale
 
-                elif touch.button == 'right':           
-                    if(selected_map[array_y][array_x] != 0):
-                        if sound1.state != 'play':
-                            sound1.play()
-                        else:
-                            sound1.stop()
-                            sound1.play() 
-                        if(selected_map[array_y][array_x] == 1):
-                            selected_map[array_y][array_x] = 2
-                        elif(selected_map[array_y][array_x] == 2):
-                            selected_map[array_y][array_x] = 3      
-                        elif(selected_map[array_y][array_x] == 3):
-                            selected_map[array_y][array_x] = 1
+
+
+    def neighbours(self, clear, type, row, col):
+        neighbours = []
+        if clear:
+            selected_map[row][col] = 0  
+        for i in range(max(0, row - 1), min(row + 2, len(map))):
+            for j in range(max(0, col - 1), min(col + 2, len(map[0]))):
+                if (i, j) != (row, col):
+                    if type == "zero":
+                        if clear:
+                            selected_map[i][j] = 0
+                        if map[i][j] == 0:
+                            neighbours.append((i, j))
+                    elif type == "mine":
+                        if selected_map[i][j] == 2:
+                            neighbours.append((i, j))
+                    elif type == "not_open":
+                        if selected_map[i][j] == 1 or selected_map[i][j] == 2 or selected_map[i][j] == 3:
+                            neighbours.append((i, j))
+                    elif type == "cell":
+                        if selected_map[i][j] == 1:
+                            neighbours.append((i, j))       
+        return neighbours  
+ 
+   
+    def merge_lists_remove_duplicates(self, list1, list2):
+        return list(set(list1) ^ set(list2))  # ^ operator performs symmetric difference operation
+
+    def list_contains_other(self, list1, list2):
+        return set(list1).issubset(set(list2)) or set(list2).issubset(set(list1))
+   
                         
-                    self.update_screen()           
-                    # check flaged_cells   
-                    flaged = 0
-                    for row in selected_map:
-                        for i in row:
-                            if i == 2:
-                                flaged += 1
-                    global flaged_cells
-                    flaged_cells = self.mine_count - flaged
-                    flag_label.text = 'Flags: {}'.format(flaged_cells) 
-                
-            return True
-
-        
+    def on_touch_down(self, touch):     
+        global game_over
+        global sound1  
+        if self.x <= touch.x <= self.x + self.width and self.y <= touch.y <= self.y + self.height:
+            try:
+                array_x = int(touch.x // sprite_size)
+                array_y = int(touch.y // sprite_size)                
+                if game_over != True:                        
+                    if touch.button == 'left':
+                        if(selected_map[array_y][array_x] == 1):
+                            if sound1.state != 'play':
+                                sound1.play()
+                            else:
+                                sound1.stop()
+                                sound1.play() 
+                            if(map[array_y][array_x] == 9):      
+                                game_over = True
+                                selected_map[array_y][array_x] = 4
+                            elif map[array_y][array_x] == 0:
+                                selected_map[array_y][array_x] = 0
+                                self.find_zero_cells(array_y, array_x)
+                                sound3.play()
+                            else:
+                                selected_map[array_y][array_x] = 0   
+                        self.check_not_mine_count()
+                    elif touch.button == 'right':           
+                        if(selected_map[array_y][array_x] != 0):
+                            if sound1.state != 'play':
+                                sound1.play()
+                            else:
+                                sound1.stop()
+                                sound1.play() 
+                            if(selected_map[array_y][array_x] == 1):
+                                selected_map[array_y][array_x] = 2
+                            elif(selected_map[array_y][array_x] == 2):
+                                selected_map[array_y][array_x] = 3      
+                            elif(selected_map[array_y][array_x] == 3):
+                                selected_map[array_y][array_x] = 1
+                                    
+                        self.check_flaged_cells()
+                    self.update_screen()
+            except IndexError:
+                print("Touch event outside the grid")    
+            return True        
         return super(SpriteGrid, self).on_touch_down(touch)
 
     
