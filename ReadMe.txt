@@ -36,3 +36,9 @@ CLOSING THE VIRTUAL ENVIRONMENT
 1: To deactivate MyVenv, type: deactivate
 4. Press Enter.
 
+BUG
+----------------------------------------------
+I have experanced a problem when trying to start the project from CMD,
+I used VSCode to create the project, starting the project from the VSCode terminal does work for me anyway.
+
+
