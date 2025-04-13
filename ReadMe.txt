@@ -39,4 +39,4 @@ Notes
 ----------------------------------------------
 I have added some solver code. 
 A fetcher that stops more flags being added then there are mines,
-and if all mines are falged correctly an autamatic win, for blind luck cases.
+and if all mines are fanged correctly an automatic win, for blind luck cases.
