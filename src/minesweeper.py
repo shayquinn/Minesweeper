@@ -127,7 +127,28 @@ class SpriteGrid(Widget):
     def update_timer(self, dt):
         global elapsed_time, time_label
         elapsed_time += 0.1
-        time_label.text = 'Time: {:.1f}'.format(elapsed_time)
+        
+        # Extract tenths of a second
+        tenths = int((elapsed_time * 10) % 10)
+        
+        # Convert to hours, minutes, seconds
+        total_seconds = int(elapsed_time)
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        
+        # Format the time string with tenths of a second
+        if hours > 0:
+            time_string = f'{hours:02d}:{minutes:02d}:{seconds:02d}.{tenths}'
+        else:
+            time_string = f'{minutes:02d}:{seconds:02d}.{tenths}'
+        
+        time_label.text = f'Time: {time_string}'
+
+    def reset_timer(self):
+        global time_label
+        tim_st = '00:00.0'
+        time_label.text = 'Time: {}'.format(tim_st)
 
     #solver code --------------------------
 
@@ -536,7 +557,7 @@ class SpriteGrid(Widget):
             you_win = False     
             elapsed_time = 0
             global time_label
-            time_label.text = 'Time: {}'.format(elapsed_time)
+            self.reset_timer()
 
         # Stop the timer when game ends
         if self.timer_event:
@@ -769,9 +790,9 @@ class App(App):
         Window.size = (grid_layout.width, grid_layout.height + action_bar.height)
         Window.resizable = False
         
-        global time_label, elapsed_time
-        elapsed_time = 0
-        time_label.text = 'Time: {}'.format(elapsed_time)
+        global time_label
+        time_st = '00:00.0'
+        time_label.text = 'Time: {}'.format(time_st)
  
 
     def option1(self, instance):
