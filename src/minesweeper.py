@@ -17,6 +17,7 @@ from kivy.properties import ListProperty
 
 import os
 import random
+import time
 
 grid_layout = None
 sprite_sheet_path = None
@@ -26,8 +27,12 @@ map = None
 selected_map = None
 game_over = None
 you_win = None
+flag_end = True
+flag_stop = True
 
-dropdown = None
+dropdown1 = None
+
+remove_zeros = False
 
 sound1, sound2, sound3, sound4 = None, None, None, None
 font1_path = None
@@ -111,6 +116,277 @@ class SpriteGrid(Widget):
                 self.add_widget(single_sprite)
                 self.sprites.append(single_sprite)  # Track the sprite
 
+    #solver code --------------------------
+
+    def solver_calls(self):
+        if dropdown1.attach_to:
+            dropdown1.dismiss()
+            from kivy.clock import Clock
+            Clock.schedule_once(lambda dt: self.continue_solver(), 0.1)
+        else:
+            self.continue_solver()
+
+
+    def continue_solver(self):
+        self.strip_zeros()
+        actions_taken = [False] * 4  # Initialize a list to track actions taken
+
+        # Attempt each solving strategy in sequence, updating the actions_taken list accordingly
+        actions_taken[0] = self.add_flag()
+        if not actions_taken[0]:  # Only proceed to the next strategy if the previous didn't take action
+            actions_taken[1] = self.remove_equal_mine_number()
+        if not actions_taken[1]:  # Similarly, proceed to the next only if this didn't take action
+            actions_taken[2] = self.find_subset(1)
+        if not actions_taken[2]:  # Proceed to the final strategy only if the previous didn't take action
+            actions_taken[3] = self.find_subset(2)
+
+        self.update_screen()
+
+        # If any action was taken, call the solver again with updated flags
+        #if any(actions_taken):
+            #self.calls_solver(*actions_taken)
+
+    def calls_solver(self, a, b, c, d):
+        #if self.update_screen():
+        #self.update_screen()
+        print("add_flag: " + str(a) + " remove_equal_mine_number: " + str(b) + " find_subset1: " + str(c) + " find_subset1: " + str(d))
+        time.sleep(1.5)
+        self.solver_calls()
+
+
+
+    def strip_zeros(self): 
+        global map
+        global selected_map
+        global remove_zeros
+        if not remove_zeros:
+            for i in range(len(map)):
+                for j in range(len(map[0])):
+                    if map[i][j] == 0 and selected_map[i][j] == 1:  # if the cell in map is 0 and the corresponding cell in selected_map is 1
+                       # self.find_zero_cells(i, j)  # open all connected 0 cells  in selected_map
+                        remove_zeros = True
+
+    def add_flag(self):
+        global map
+        global selected_map
+        global flaged_cells
+       
+        return_vale = False
+
+        
+        for i in range(len(map)):
+            for j in range(len(map[0])):
+                if map[i][j] != 0 and map[i][j] != 9 and selected_map[i][j] == 0:
+                    if map[i][j] == len(self.neighbor(False, "not_open", i, j)):
+                        if len(self.neighbor(False, "not_open", i, j)) != len(self.neighbor(False, "mine", i, j)):
+                            return_vale = True
+                            for (x, y) in self.neighbor(False, "not_open", i, j):
+                                selected_map[x][y] = 2
+
+        # Update the flag count
+        flaged = sum(row.count(2) for row in selected_map)
+        flaged_cells = self.mine_count - flaged
+        flag_label.text = 'Flags: {}'.format(flaged_cells)
+        
+        self.check_all_falgs()
+        
+        
+        return return_vale
+    
+    def check_all_falgs(self): 
+        global game_over
+        global you_win
+        # Check if all mines are correctly flagged
+        all_mines_flagged = True
+        for i in range(len(map)):
+            for j in range(len(map[0])):
+                if map[i][j] == 9 and selected_map[i][j] != 2:
+                    all_mines_flagged = False
+                    break
+            if not all_mines_flagged:
+                break 
+        # If all mines are correctly flagged and no incorrect flags exist
+        if all_mines_flagged:
+            # Count total flags to ensure no incorrect flags
+            total_flags = sum(row.count(2) for row in selected_map)
+            total_mines = sum(row.count(9) for row in map)
+            
+            if total_flags == total_mines:
+                game_over = True
+                you_win = True
+                global sound4
+                sound4.play()
+                self.update_screen()
+    
+
+    
+    def remove_equal_mine_number(self):
+        global map
+        global selected_map
+        return_vale = False
+        for i in range(len(map)):
+            for j in range(len(map[0])):
+                n, mn = self.neighbor(False, "not_open", i, j), self.neighbor(False, "mine", i, j)
+                if map[i][j] == len(mn):
+                    if map[i][j] < len(n):
+                        return_vale = True
+                        for (x, y) in self.merge_lists_remove_duplicates(n, mn):
+                            selected_map[x][y] = 0
+        return return_vale
+    
+    def find_subset(self, type):
+        global map, selected_map
+        work_done = False
+
+        while True:
+            list_list = [[] for _ in range(8)]
+            for i in range(len(map)):
+                for j in range(len(map[0])):
+                    if selected_map[i][j] == 0:
+                        remaining_mines = map[i][j] - len(self.neighbor(False, "mine", i, j))
+                        if 0 <= remaining_mines <= 7:
+                            cell_list = self.neighbor(False, "cell", i, j)
+                            list_list[remaining_mines].append(cell_list)  # Store cell lists directly
+
+            # Simplify list_list by removing empty entries
+            list_list = [group for group in list_list if group]
+
+            if not any(list_list):  # Exit loop if list_list is empty or only contains empty sublists
+                break
+
+            # Alternate between uncovering and processing logic based on whether work was done
+            if not work_done:  # Only switch methods if no work was done in the previous iteration
+                if type == 1:
+                    if self.uncover_common_cells(list_list):
+                        work_done = True
+                        continue
+                if type == 2:
+                    if self.process_groups(list_list):
+                        work_done = True
+                        continue
+
+            break  # Exit while True loop if no further actions can be taken
+        return work_done
+    
+  
+    def find_subset(self, type):
+        global map, selected_map
+        work_done = False
+
+        while True:
+            list_list = [[] for _ in range(8)]
+            for i in range(len(map)):
+                for j in range(len(map[0])):
+                    if selected_map[i][j] == 0:
+                        remaining_mines = map[i][j] - len(self.neighbor(False, "mine", i, j))
+                        if 0 <= remaining_mines <= 7:
+                            cell_list = self.neighbor(False, "cell", i, j)
+                            list_list[remaining_mines].append(cell_list)  # Store cell lists directly
+
+            # Simplify list_list by removing empty entries
+            list_list = [group for group in list_list if group]
+
+            if not any(list_list):  # Exit loop if list_list is empty or only contains empty sublists
+                break
+
+            # Alternate between uncovering and processing logic based on whether work was done
+            if not work_done:  # Only switch methods if no work was done in the previous iteration
+                if type == 1:
+                    if self.uncover_common_cells(list_list):
+                        work_done = True
+                        continue
+                if type == 2:
+                    if self.process_groups(list_list):
+                        work_done = True
+                        continue
+
+            break  # Exit while True loop if no further actions can be taken
+        return work_done
+    
+    def neighbor(self, clear, type, row, col):
+        neighbors = []
+        if clear:
+            selected_map[row][col] = 0  
+        for i in range(max(0, row - 1), min(row + 2, len(map))):
+            for j in range(max(0, col - 1), min(col + 2, len(map[0]))):
+                if (i, j) != (row, col):
+                    if type == "zero":
+                        if clear:
+                            selected_map[i][j] = 0
+                        if map[i][j] == 0:
+                            neighbors.append((i, j))
+                    elif type == "mine":
+                        if selected_map[i][j] == 2:
+                            neighbors.append((i, j))
+                    elif type == "not_open":
+                        if selected_map[i][j] == 1 or selected_map[i][j] == 2 or selected_map[i][j] == 3:
+                            neighbors.append((i, j))
+                    elif type == "cell":
+                        if selected_map[i][j] == 1:
+                            neighbors.append((i, j))       
+        return neighbors  
+    
+    def merge_lists_remove_duplicates(self, list1, list2):
+        return list(set(list1) ^ set(list2))  # ^ operator performs symmetric difference operation
+
+    def list_contains_other(self, list1, list2):
+        return set(list1).issubset(set(list2)) or set(list2).issubset(set(list1))
+
+    def process_groups(self, list_list):
+        global selected_map
+        work_done = False
+
+        # Preprocess to combine all groups into a dictionary with the key being the mine count
+        # and the value being a set of all cells for that mine count.
+        combined_groups = {}
+        for mine_count, groups in enumerate(list_list):
+            if mine_count == 0:  # Skip groups corresponding to 0 mines
+                continue
+            for group in groups:
+                if mine_count not in combined_groups:
+                    combined_groups[mine_count] = set(group)
+                else:
+                    combined_groups[mine_count].update(group)
+
+        # Iterate over each mine count and its cells
+        for mine_count, cells in combined_groups.items():
+            # Compare with each subsequent mine count
+            for higher_mine_count in range(mine_count + 1, len(list_list)):
+                if higher_mine_count not in combined_groups:
+                    continue  # Skip if no groups for this mine count
+
+                higher_cells = combined_groups[higher_mine_count]
+                # Calculate symmetric difference between current and higher mine count cells
+                diff_cells = cells.symmetric_difference(higher_cells)
+
+                # If the number of unique cells equals the difference in mine counts,
+                # it suggests these cells have a distinct status (e.g., to be flagged).
+                if len(diff_cells) == higher_mine_count - mine_count:
+                    # Flag each cell in the difference as a mine
+                    for x, y in diff_cells:
+                        if selected_map[x][y] not in [0, 2]:  # Skip already uncovered or flagged cells
+                            selected_map[x][y] = 2
+                            work_done = True
+
+        return work_done
+    
+    def uncover_common_cells(self, list_list):
+        global selected_map
+        work_done = False
+        for sub_list in list_list:
+            for i, el1 in enumerate(sub_list):
+                for j, el2 in enumerate(sub_list) :
+                    if i != j:
+                        contains = self.list_contains_other(el1, el2)   
+                        if contains:
+                            duplicates = self.merge_lists_remove_duplicates(el1, el2)
+                            if len(duplicates) > 0:
+                                work_done = True
+                                for el3 in duplicates:
+                                    selected_map[el3[0]][el3[1]] = 0
+        return work_done
+    #--------------------------------------
+
     def get_neighbours(self, row, col):
         neighbours = []
         for i in range(max(0, row - 1), min(row + 2, len(map))):
@@ -156,7 +432,7 @@ class SpriteGrid(Widget):
                         if(map[array_y][array_x] == 9):      
                             game_over = True
                             selected_map[array_y][array_x] = 4
-                            self.update_screen()
+                            self.game_over_call("lose")
                             #print("Game Over")
                         elif map[array_y][array_x] == 0:
                             selected_map[array_y][array_x] = 0
@@ -175,11 +451,8 @@ class SpriteGrid(Widget):
                             if i == 0:
                                 count += 1
                     if count == self.not_mine_count:
-                        game_over = True
-                        global you_win
-                        you_win = True
-                        sound4.play()
-                    self.update_screen()
+                        self.game_over_call("win")
+                        
                     #print(f"not_mine_count: {self.not_mine_count} count: {count}")
 
                 elif touch.button == 'right':           
@@ -188,17 +461,33 @@ class SpriteGrid(Widget):
                             sound1.play()
                         else:
                             sound1.stop()
-                            sound1.play() 
-                        if(selected_map[array_y][array_x] == 1):
-                            selected_map[array_y][array_x] = 2
-                            #print(f"Touch down on sprite at array position {array_x}, {array_y}")
-                        elif(selected_map[array_y][array_x] == 2):
-                            selected_map[array_y][array_x] = 3      
-                            #print(f"Touch down on sprite at array position {array_x}, {array_y}")
-                        elif(selected_map[array_y][array_x] == 3):
-                            selected_map[array_y][array_x] = 1
-                            #print(f"Touch down on sprite at array position {array_x}, {array_y}")
-                        
+                            sound1.play()
+                        if flag_stop:
+                            if sum(row.count(2) for row in selected_map) < self.mine_count:
+                                if(selected_map[array_y][array_x] == 1):
+                                    selected_map[array_y][array_x] = 2
+                                elif(selected_map[array_y][array_x] == 2):
+                                    selected_map[array_y][array_x] = 3      
+                                elif(selected_map[array_y][array_x] == 3):
+                                    selected_map[array_y][array_x] = 1
+                            else:      
+                                if(selected_map[array_y][array_x] == 1):
+                                    selected_map[array_y][array_x] = 3
+                                elif(selected_map[array_y][array_x] == 2):
+                                    selected_map[array_y][array_x] = 3      
+                                elif(selected_map[array_y][array_x] == 3):
+                                    selected_map[array_y][array_x] = 1
+                        else:
+                            if(selected_map[array_y][array_x] == 1):
+                                selected_map[array_y][array_x] = 2
+                                #print(f"Touch down on sprite at array position {array_x}, {array_y}")
+                            elif(selected_map[array_y][array_x] == 2):
+                                selected_map[array_y][array_x] = 3      
+                                #print(f"Touch down on sprite at array position {array_x}, {array_y}")
+                            elif(selected_map[array_y][array_x] == 3):
+                                selected_map[array_y][array_x] = 1
+                                #print(f"Touch down on sprite at array position {array_x}, {array_y}")
+                    self.check_all_falgs()   
                     self.update_screen()           
                     # check flaged_cells   
                     flaged = 0
@@ -215,6 +504,17 @@ class SpriteGrid(Widget):
 
         
         return super(SpriteGrid, self).on_touch_down(touch)
+    
+    def game_over_call(self, type):
+        global game_over
+        global you_win
+        if type == "win":
+            game_over = True
+            you_win = True     
+        elif type == "lose":   
+            game_over = True
+            you_win = False
+        self.update_screen()
 
     
     
@@ -282,6 +582,8 @@ class SpriteGrid(Widget):
                     outline_width=3
                     )
                 grid_layout.add_widget(label)
+                global sound4
+                sound4.play()   
                 
             else:
                 label = Label(
@@ -300,6 +602,7 @@ class SpriteGrid(Widget):
                 grid_layout.add_widget(label)
                 global sound2
                 sound2.play()
+        return True
 
 
 
@@ -335,8 +638,7 @@ class App(App):
     def build(self):
        
         Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
-        # Remove window title
-        Window.title = ''
+        
         global sprite_size
         sprite_size = 25
         global num_rows
@@ -351,7 +653,9 @@ class App(App):
         # sounds directory
         sounds_dir = os.path.join(current_dir, '..', 'sounds')
         
+        
         sound1_path = os.path.join(sounds_dir, 'click-button-140881.mp3')
+        print("Sound1 path:", sound1_path)
         global sound1
         sound1 = SoundLoader.load(sound1_path)
         sound1.volume = 1.0  # Maximum volume
@@ -393,23 +697,27 @@ class App(App):
         av.add_widget(FastActionButton(text='Level', on_press=self.option2))
 
         # create a dropdown
-        global dropdown
-        dropdown = DropDown()
+        global dropdown1
+        dropdown1 = DropDown()
         # list of elements to add to the dropdown
-        elements = ['Easy', 'Medium', 'Hard', 'Expert']
+        elements = ['Easy', 'Medium', 'Hard', 'Expert', "Solve"]
         # add items to the dropdown
         for element in elements:
             btn = Button(text=element, size_hint_y=None, height=44)
             # bind the button to set the text and close the dropdown
-            btn.bind(on_release=lambda btn: self.on_dropdown_select(btn, dropdown))
+            btn.bind(on_release=lambda btn: self.on_dropdown_select(btn, dropdown1))
             # then add the button inside the dropdown
-            dropdown.add_widget(btn)
+            dropdown1.add_widget(btn)
 
         action_bar.add_widget(av)
         root.add_widget(action_bar)
         self.init_sprite_grid()
         
         return root 
+    
+    def on_start(self):
+        # Remove window title
+        Window.title = ''
     
     def init_sprite_grid(self):
         global root, grid_layout
@@ -433,12 +741,12 @@ class App(App):
         print('Restart')
 
     def option2(self, instance):
-        global dropdown
-        instance.bind(on_release=dropdown.open)
+        global dropdown1
+        instance.bind(on_release=dropdown1.open)
 
-    def on_dropdown_select(self, btn, dropdown):
+    def on_dropdown_select(self, btn, dropdown1):
         # update the main button text to the selected value and close the dropdown
-        dropdown.select(btn.text)
+        dropdown1.select(btn.text)
         global num_rows
         global num_cols
         if btn.text == 'Easy':  
@@ -461,6 +769,11 @@ class App(App):
             num_cols = 40
             self.init_sprite_grid()
             print('Resize')
+        elif btn.text == 'Solve':
+            grid_layout.children[0].solver_calls()
+
+        # Close the dropdown after processing
+        dropdown1.dismiss()
         
        
 
