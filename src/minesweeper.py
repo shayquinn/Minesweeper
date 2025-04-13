@@ -14,6 +14,7 @@ from kivy.config import Config
 from kivy.core.window import Window
 from kivy.core.image import Image as CoreImage
 from kivy.properties import ListProperty
+from kivy.clock import Clock
 
 import os
 import random
@@ -37,6 +38,8 @@ remove_zeros = False
 sound1, sound2, sound3, sound4 = None, None, None, None
 font1_path = None
 flag_label = None
+time_label = None
+elapsed_time = 0
 flaged_cells = 0
 value_map = {
     0: 12,
@@ -84,6 +87,10 @@ class SpriteGrid(Widget):
     def __init__(self, **kwargs):
         super(SpriteGrid, self).__init__(**kwargs)
 
+         # Add this line to track if game has started
+        self.game_started = False
+        self.timer_event = None
+
         global game_over
         game_over = False
         global you_win
@@ -115,6 +122,12 @@ class SpriteGrid(Widget):
                 single_sprite = SingleSprite(sprite_sheet_path, sprite_index, pos=(x * sprite_size, y * sprite_size), size=(sprite_size, sprite_size))
                 self.add_widget(single_sprite)
                 self.sprites.append(single_sprite)  # Track the sprite
+
+    # Add this method to update the timer
+    def update_timer(self, dt):
+        global elapsed_time, time_label
+        elapsed_time += 0.1
+        time_label.text = 'Time: {:.1f}'.format(elapsed_time)
 
     #solver code --------------------------
 
@@ -212,10 +225,7 @@ class SpriteGrid(Widget):
             total_mines = sum(row.count(9) for row in map)
             
             if total_flags == total_mines:
-                game_over = True
-                you_win = True
-                global sound4
-                sound4.play()
+                self.game_over_call("win")
                 self.update_screen()
     
 
@@ -435,12 +445,14 @@ class SpriteGrid(Widget):
                             self.game_over_call("lose")
                             #print("Game Over")
                         elif map[array_y][array_x] == 0:
+                            self.start_clock()
                             selected_map[array_y][array_x] = 0
                             self.find_zero_cells(array_y, array_x)
                             self.update_screen()
-                            sound3.play()
+                            sound3.play()   
                             #print("Find zeros")
                         else:
+                            self.start_clock()
                             selected_map[array_y][array_x] = 0
                             self.update_screen()
                             #print(f"Touch down on sprite at array position {array_x}, {array_y}")  
@@ -505,15 +517,35 @@ class SpriteGrid(Widget):
         
         return super(SpriteGrid, self).on_touch_down(touch)
     
+    def start_clock(self):
+        if not self.game_started:
+            self.game_started = True
+            global elapsed_time
+            elapsed_time = 0
+            self.timer_event = Clock.schedule_interval(self.update_timer, 0.1)
+    
     def game_over_call(self, type):
         global game_over
         global you_win
+        global elapsed_time
         if type == "win":
             game_over = True
             you_win = True     
         elif type == "lose":   
             game_over = True
-            you_win = False
+            you_win = False     
+            elapsed_time = 0
+            global time_label
+            time_label.text = 'Time: {}'.format(elapsed_time)
+
+        # Stop the timer when game ends
+        if self.timer_event:
+            print("Stopping timer")
+            Clock.unschedule(self.timer_event)       
+            self.game_started = False
+            self.timer_event = None
+            
+
         self.update_screen()
 
     
@@ -685,12 +717,14 @@ class App(App):
         global font1_path
         font1_path = os.path.join(fonts_dir, 'Ultra-Regular.ttf')
 
-        global root, action_bar, flag_label
+        global root, action_bar, flag_label, time_label 
         root = BoxLayout(orientation='vertical')
         action_bar = ActionBar(pos_hint={'top':1}, size_hint_y=None, height=50)
         av = ActionView()
         av.add_widget(ActionPrevious(title='Minesweeper', with_previous=False))
 
+        time_label = ActionLabel(text='Time: {}'.format(elapsed_time))
+        av.add_widget(time_label)
         flag_label = ActionLabel(text='Flags: {}'.format(flaged_cells))
         av.add_widget(flag_label)
         av.add_widget(FastActionButton(text='Restart', on_press=self.option1))
@@ -734,6 +768,10 @@ class App(App):
         # Set the size of the window to match the size of the sprite grid
         Window.size = (grid_layout.width, grid_layout.height + action_bar.height)
         Window.resizable = False
+        
+        global time_label, elapsed_time
+        elapsed_time = 0
+        time_label.text = 'Time: {}'.format(elapsed_time)
  
 
     def option1(self, instance):
