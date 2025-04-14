@@ -446,6 +446,11 @@ class SpriteGrid(Widget):
         if self.x <= touch.x <= self.x + self.width and self.y <= touch.y <= self.y + self.height:
             print("on_touch_down") 
 
+            # Add bounds checking to prevent index errors
+            if array_x >= num_cols or array_y >= num_rows or array_x < 0 or array_y < 0:
+                print(f"Click outside valid grid area: {array_x}, {array_y}")
+                return True
+
             
             array_x = int(touch.x // sprite_size)
             array_y = int(touch.y // sprite_size)
