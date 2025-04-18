@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\shays\OneDrive\Desktop\Minesweeper-main (1)\Minesweeper-main\MyVenv
+set VIRTUAL_ENV=C:\Users\shays\OneDrive\Desktop\Minesweepers_woworking_copy\Minesweeper\MyVenv
 
 if not defined PROMPT set PROMPT=$P$G
 

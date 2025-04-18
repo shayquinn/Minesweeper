@@ -183,7 +183,7 @@ class SpriteGrid(Widget):
     def calls_solver(self, a, b, c, d):
         #if self.update_screen():
         #self.update_screen()
-        print("add_flag: " + str(a) + " remove_equal_mine_number: " + str(b) + " find_subset1: " + str(c) + " find_subset1: " + str(d))
+        #print("add_flag: " + str(a) + " remove_equal_mine_number: " + str(b) + " find_subset1: " + str(c) + " find_subset1: " + str(d))
         time.sleep(1.5)
         self.solver_calls()
 
@@ -444,19 +444,19 @@ class SpriteGrid(Widget):
     def on_touch_down(self, touch):     
         
         if self.x <= touch.x <= self.x + self.width and self.y <= touch.y <= self.y + self.height:
-            print("on_touch_down") 
+            #print("on_touch_down") 
 
             array_x = int(touch.x // sprite_size)
             array_y = int(touch.y // sprite_size)
 
             # Add bounds checking to prevent index errors
             if array_x >= num_cols or array_y >= num_rows or array_x < 0 or array_y < 0:
-                print(f"Click outside valid grid area: {array_x}, {array_y}")
+                #print(f"Click outside valid grid area: {array_x}, {array_y}")
                 return True
 
             global game_over
             if game_over != True:
-                print(f"selected_map: {selected_map[array_y][array_x]}")  
+                #print(f"selected_map: {selected_map[array_y][array_x]}")  
                 global sound1             
                 if touch.button == 'left':
                     if(selected_map[array_y][array_x] == 1):
@@ -566,7 +566,7 @@ class SpriteGrid(Widget):
 
         # Stop the timer when game ends
         if self.timer_event:
-            print("Stopping timer")
+            #print("Stopping timer")
             Clock.unschedule(self.timer_event)       
             self.game_started = False
             self.timer_event = None
@@ -713,7 +713,7 @@ class App(App):
         
         
         sound1_path = os.path.join(sounds_dir, 'click-button-140881.mp3')
-        print("Sound1 path:", sound1_path)
+        #print("Sound1 path:", sound1_path)
         global sound1
         sound1 = SoundLoader.load(sound1_path)
         sound1.volume = 1.0  # Maximum volume
@@ -794,6 +794,7 @@ class App(App):
         # Set the size of the window to match the size of the sprite grid
         Window.size = (grid_layout.width, grid_layout.height + action_bar.height)
         Window.resizable = False
+
         
         global time_label
         time_st = '00:00.0'
@@ -802,7 +803,7 @@ class App(App):
 
     def option1(self, instance):
         self.init_sprite_grid()
-        print('Restart')
+        #print('Restart')
 
     def option2(self, instance):
         global dropdown1
@@ -817,22 +818,22 @@ class App(App):
             num_rows = 9   
             num_cols = 16
             self.init_sprite_grid()
-            print('Resize')
+            #print('Resize')
         elif btn.text == 'Medium':  
             num_rows = 16
             num_cols = 16
             self.init_sprite_grid()
-            print('Resize')
+            #print('Resize')
         elif btn.text == 'Hard':
             num_rows = 20
             num_cols = 30
             self.init_sprite_grid()
-            print('Resize')
+            #print('Resize')
         elif btn.text == 'Expert':
             num_rows = 33
             num_cols = 40
             self.init_sprite_grid()
-            print('Resize')
+            #print('Resize')
         elif btn.text == 'Solve':
             grid_layout.children[0].solver_calls()
 

@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\shays\OneDrive\Desktop\Minesweeper-main (1)\Minesweeper-main\MyVenv"
+VIRTUAL_ENV="C:\Users\shays\OneDrive\Desktop\Minesweepers_woworking_copy\Minesweeper\MyVenv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
