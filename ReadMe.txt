@@ -18,7 +18,12 @@ INSTALLATION
 
 TO START THE GAME
 ----------------------------------------------
+A .exe has been added for people starting the game from cold.
+else 
 If the virtual environment is still active, start at step 3.
+// it seems to help when starting form cold in CMD to do this again
+0. To initialize venv, run: python -m venv MyVenv
+//
 1. Open the CMD at the main directory of the project.
 2. To activate the virtual environment:
    on Windows: .\MyVenv\Scripts\activate
@@ -32,6 +37,7 @@ CLOSING THE VIRTUAL ENVIRONMENT
 
 BUG
 ----------------------------------------------
+-- might be fixed
 I have experanced a problem when trying to start the project from CMD,
 I used VSCode to create the project, starting the project from the VSCode terminal does work for me anyway.
 
@@ -39,4 +45,4 @@ Notes
 ----------------------------------------------
 I have added some solver code. 
 A fetcher that stops more flags being added then there are mines,
-and if all mines are fanged correctly an automatic win, for blind luck cases.
+and if all mines are falged correctly an autamatic win, for blind luck cases.
