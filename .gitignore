@@ -1,0 +1,42 @@
+# Python virtual environment
+MyVenv/
+venv/
+ENV/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Kivy cache
+.kivy/
+*.pyc.1
+
+# Logs
+*.log
+
+# Local configuration
+*.ini
+local_settings.py
+
+# Build artifacts
+#*.exe
+*.spec
+*.bat.bak
+
