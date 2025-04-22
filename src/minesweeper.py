@@ -1,7 +1,7 @@
 from kivy.app import App
 
 from kivy.graphics.texture import TextureRegion
-from kivy.graphics import Rectangle
+from kivy.graphics import Rectangle, Color
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.floatlayout import FloatLayout
@@ -16,9 +16,15 @@ from kivy.core.image import Image as CoreImage
 from kivy.properties import ListProperty
 from kivy.clock import Clock
 
+
+
+from kivy.graphics.shader import Shader
+from kivy.graphics import RenderContext
+
 import os
 import random
 import time
+import colorsys
 
 grid_layout = None
 sprite_sheet_path = None
@@ -30,6 +36,11 @@ game_over = None
 you_win = None
 flag_end = True
 flag_stop = True
+
+hue = 0.0
+
+sprite_sheet_path_array = []
+sprite_sheet_number = 0
 
 dropdown1 = None
 
@@ -71,12 +82,17 @@ class SingleSprite(Widget):
         self.update_texture()
     
     def update_texture(self):
+        # Get the sprite from the sprite sheet
         sprite_size = self.sprite_sheet.width // 4  # Assuming a 4x4 grid
         i = self.sprite_index % 4
         j = self.sprite_index // 4
         region = TextureRegion(i * sprite_size, j * sprite_size, sprite_size, sprite_size, self.sprite_sheet)
+        
+        # Clear previous drawing
         self.canvas.clear()
-        with self.canvas:
+        
+        # Add rectangle to the canvas with the texture region
+        with self.canvas:     
             Rectangle(texture=region, pos=self.pos, size=self.size)
 
     def change_sprite(self, new_index):
@@ -86,6 +102,12 @@ class SingleSprite(Widget):
 class SpriteGrid(Widget):
     def __init__(self, **kwargs):
         super(SpriteGrid, self).__init__(**kwargs)
+
+        global current_hue
+        if 'current_hue' not in globals():
+            current_hue = 0.0  # Default hue
+
+
 
          # Add this line to track if game has started
         self.game_started = False
@@ -113,6 +135,8 @@ class SpriteGrid(Widget):
             pass
         global selected_map
         selected_map = [[1 for _ in range(num_cols)] for _ in range(num_rows)]
+
+      
 
         # Create a grid of sprites
         for y in range(num_rows):
@@ -155,7 +179,6 @@ class SpriteGrid(Widget):
     def solver_calls(self):
         if dropdown1.attach_to:
             dropdown1.dismiss()
-            from kivy.clock import Clock
             Clock.schedule_once(lambda dt: self.continue_solver(), 0.1)
         else:
             self.continue_solver()
@@ -721,7 +744,7 @@ class App(App):
         sound2_path = os.path.join(sounds_dir, 'low-impactwav-14905.mp3')
         global sound2
         sound2 = SoundLoader.load(sound2_path)
-        sound2.volume = 1.0  # Maximum volume
+        sound2.volume = 0.3  # Maximum volume
 
         sound3_path = os.path.join(sounds_dir, 'punch-a-rock-161647.mp3')
         global sound3
@@ -735,8 +758,20 @@ class App(App):
 
         # images directory
         images_dir = os.path.join(current_dir, '..', 'images')
+        global sprite_sheet_path_array, sprite_sheet_number
+
+        sprite_sheet_number = 0
+        sprite_sheet_path_array.append(os.path.join(images_dir, 'gaming_SpriteSheet.png'))
+        sprite_sheet_path_array.append(os.path.join(images_dir, 'heart1.png'))
+        sprite_sheet_path_array.append(os.path.join(images_dir, 'green2.png'))
+
+        # Add this line to initialize sprite_sheet_path
         global sprite_sheet_path
-        sprite_sheet_path = os.path.join(images_dir, 'gaming_SpriteSheet.png')
+        sprite_sheet_path = sprite_sheet_path_array[sprite_sheet_number]
+        
+        #sprite_sheet_path1 = os.path.join(images_dir, 'gaming_SpriteSheet.png')
+        #sprite_sheet_path2 = os.path.join(images_dir, 'heart1.png')
+        #sprite_sheet_path3 = os.path.join(images_dir, 'green2.png')
 
         # font directory
         fonts_dir = os.path.join(current_dir, '..', 'fonts')
@@ -760,7 +795,7 @@ class App(App):
         global dropdown1
         dropdown1 = DropDown()
         # list of elements to add to the dropdown
-        elements = ['Easy', 'Medium', 'Hard', 'Expert', "Solve"]
+        elements = ['Easy', 'Medium', 'Hard', 'Expert', "Solve", "Theme"]
         # add items to the dropdown
         for element in elements:
             btn = Button(text=element, size_hint_y=None, height=44)
@@ -800,6 +835,33 @@ class App(App):
         time_st = '00:00.0'
         time_label.text = 'Time: {}'.format(time_st)
  
+    def change_theme(self):
+        global sprite_sheet_path_array, sprite_sheet_number, sprite_sheet_path, grid_layout, sound1
+        
+        # Update theme number
+        if sprite_sheet_number >= len(sprite_sheet_path_array) - 1:
+            sprite_sheet_number = 0
+        else:
+            sprite_sheet_number += 1
+        
+        # Update global path variable
+        sprite_sheet_path = sprite_sheet_path_array[sprite_sheet_number]     
+        print(f"Changed theme to #{sprite_sheet_number+1}")
+        
+        # Find the SpriteGrid in the children
+        sprite_grid = None
+        if grid_layout and grid_layout.children:
+            for child in grid_layout.children:
+                if isinstance(child, SpriteGrid):
+                    sprite_grid = child
+                    break
+        
+        # Only update sprites if we found a valid SpriteGrid
+        if sprite_grid:
+            for sprite in sprite_grid.sprites:
+                # Load the new texture and update each sprite
+                sprite.sprite_sheet = CoreImage(sprite_sheet_path).texture
+                sprite.update_texture()
 
     def option1(self, instance):
         self.init_sprite_grid()
@@ -836,6 +898,11 @@ class App(App):
             #print('Resize')
         elif btn.text == 'Solve':
             grid_layout.children[0].solver_calls()
+        elif btn.text == 'Theme':
+            # Implement theme change logic here
+            # For example, you could change the background color or sprite sheet
+            self.change_theme()
+
 
         # Close the dropdown after processing
         dropdown1.dismiss()
