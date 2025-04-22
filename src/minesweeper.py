@@ -764,6 +764,7 @@ class App(App):
         sprite_sheet_path_array.append(os.path.join(images_dir, 'gaming_SpriteSheet.png'))
         sprite_sheet_path_array.append(os.path.join(images_dir, 'heart1.png'))
         sprite_sheet_path_array.append(os.path.join(images_dir, 'green2.png'))
+        sprite_sheet_path_array.append(os.path.join(images_dir, 'shark1.png'))
 
         # Add this line to initialize sprite_sheet_path
         global sprite_sheet_path
