@@ -37,7 +37,7 @@ you_win = None
 flag_end = True
 flag_stop = True
 
-hue = 0.0
+
 
 sprite_sheet_path_array = []
 sprite_sheet_number = 0
@@ -106,8 +106,6 @@ class SpriteGrid(Widget):
         global current_hue
         if 'current_hue' not in globals():
             current_hue = 0.0  # Default hue
-
-
 
          # Add this line to track if game has started
         self.game_started = False
