@@ -103,9 +103,22 @@ class SpriteGrid(Widget):
     def __init__(self, **kwargs):
         super(SpriteGrid, self).__init__(**kwargs)
 
-        global current_hue
-        if 'current_hue' not in globals():
-            current_hue = 0.0  # Default hue
+        c_dir = os.path.dirname(os.path.abspath(__file__))
+        im_dir = os.path.join(c_dir, '..', 'images/background')
+
+        # First, add the background image to the canvas
+        background_path = os.path.join(im_dir, 'green_background.png') 
+        
+        # Create the background texture
+        self.background_texture = CoreImage(background_path).texture
+        self.background_texture.wrap = 'repeat'  # Enable texture repeating
+        
+        # Draw the background first (before any sprites)
+        with self.canvas.before:
+            Color(1, 1, 1, 1)  # Full white color (no tint)
+            Rectangle(pos=self.pos, size=self.size, texture=self.background_texture)
+
+
 
          # Add this line to track if game has started
         self.game_started = False
@@ -728,6 +741,7 @@ class App(App):
 
         # Get the path to the images directory (assuming this file is in 'src')
         current_dir = os.path.dirname(os.path.abspath(__file__))
+        
 
         # sounds directory
         sounds_dir = os.path.join(current_dir, '..', 'sounds')
@@ -761,9 +775,10 @@ class App(App):
         sprite_sheet_number = 0
         sprite_sheet_path_array.append(os.path.join(images_dir, 'gaming_SpriteSheet.png'))
         sprite_sheet_path_array.append(os.path.join(images_dir, 'heart1.png'))
-        sprite_sheet_path_array.append(os.path.join(images_dir, 'green2.png'))
+        sprite_sheet_path_array.append(os.path.join(images_dir, 'green3.png'))
         sprite_sheet_path_array.append(os.path.join(images_dir, 'shark1.png'))
         sprite_sheet_path_array.append(os.path.join(images_dir, 'bat1.png'))
+        sprite_sheet_path_array.append(os.path.join(images_dir, 'heat_map.png'))
 
         # Add this line to initialize sprite_sheet_path
         global sprite_sheet_path
