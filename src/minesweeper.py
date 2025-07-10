@@ -46,12 +46,17 @@ dropdown1 = None
 
 remove_zeros = False
 
+# Volume control variables
+master_volume = 0.7  # Default master volume (0.0 to 1.0)
+is_muted = False
+
 sound1, sound2, sound3, sound4 = None, None, None, None
 font1_path = None
 flag_label = None
 time_label = None
 elapsed_time = 0
 flaged_cells = 0
+volume_label = None  # Add volume label reference
 value_map = {
     0: 12,
     1: 13,
@@ -725,6 +730,58 @@ def create_map(width, height, num_mines):
                         map[y][x] += 1
     return map
 
+def update_all_volumes():
+    """Update volume for all sound effects"""
+    global sound1, sound2, sound3, sound4, master_volume, is_muted
+    
+    # Base volumes (normalized to consistent levels)
+    base_volumes = {
+        'sound1': 0.5,  # Click sound
+        'sound2': 0.6,  # Game over sound
+        'sound3': 0.5,  # Cell reveal sound
+        'sound4': 0.8   # Win sound
+    }
+    
+    # Apply master volume and mute
+    final_volume = 0.0 if is_muted else master_volume
+    
+    if sound1:
+        sound1.volume = base_volumes['sound1'] * final_volume
+    if sound2:
+        sound2.volume = base_volumes['sound2'] * final_volume
+    if sound3:
+        sound3.volume = base_volumes['sound3'] * final_volume
+    if sound4:
+        sound4.volume = base_volumes['sound4'] * final_volume
+    
+    # Update volume label
+    global volume_label
+    if volume_label:
+        if is_muted:
+            volume_label.text = 'Vol: MUTED'
+        else:
+            volume_label.text = f'Vol: {int(master_volume * 100)}%'
+
+def volume_up():
+    """Increase master volume"""
+    global master_volume, is_muted
+    is_muted = False
+    master_volume = min(1.0, master_volume + 0.1)
+    update_all_volumes()
+
+def volume_down():
+    """Decrease master volume"""
+    global master_volume, is_muted
+    is_muted = False
+    master_volume = max(0.0, master_volume - 0.1)
+    update_all_volumes()
+
+def toggle_mute():
+    """Toggle mute on/off"""
+    global is_muted
+    is_muted = not is_muted
+    update_all_volumes()
+
 
 class App(App):
     def build(self):
@@ -751,22 +808,21 @@ class App(App):
         #print("Sound1 path:", sound1_path)
         global sound1
         sound1 = SoundLoader.load(sound1_path)
-        sound1.volume = 1.0  # Maximum volume
 
         sound2_path = os.path.join(sounds_dir, 'low-impactwav-14905.mp3')
         global sound2
         sound2 = SoundLoader.load(sound2_path)
-        sound2.volume = 0.3  # Maximum volume
 
         sound3_path = os.path.join(sounds_dir, 'punch-a-rock-161647.mp3')
         global sound3
         sound3 = SoundLoader.load(sound3_path)
-        sound3.volume = 0.3  # Half volume
 
         sound4_path = os.path.join(sounds_dir, 'you-win-sequence-1-183948.mp3')
         global sound4
         sound4 = SoundLoader.load(sound4_path)
-        sound4.volume = 1.0  # Half volume
+        
+        # Apply consistent volume settings
+        update_all_volumes()
 
         # images directory
         images_dir = os.path.join(current_dir, '..', 'images')
@@ -793,7 +849,7 @@ class App(App):
         global font1_path
         font1_path = os.path.join(fonts_dir, 'Ultra-Regular.ttf')
 
-        global root, action_bar, flag_label, time_label 
+        global root, action_bar, flag_label, time_label, volume_label
         root = BoxLayout(orientation='vertical')
         action_bar = ActionBar(pos_hint={'top':1}, size_hint_y=None, height=50)
         av = ActionView()
@@ -803,6 +859,8 @@ class App(App):
         av.add_widget(time_label)
         flag_label = ActionLabel(text='Flags: {}'.format(flaged_cells))
         av.add_widget(flag_label)
+        volume_label = ActionLabel(text=f'Vol: {int(master_volume * 100)}%')
+        av.add_widget(volume_label)
         av.add_widget(FastActionButton(text='Restart', on_press=self.option1))
         av.add_widget(FastActionButton(text='Level', on_press=self.option2))
 
@@ -810,7 +868,7 @@ class App(App):
         global dropdown1
         dropdown1 = DropDown()
         # list of elements to add to the dropdown
-        elements = ['Easy', 'Medium', 'Hard', 'Expert', "Solve", "Theme"]
+        elements = ['Easy', 'Medium', 'Hard', 'Expert', "Solve", "Theme", "Vol+", "Vol-", "Mute"]
         # add items to the dropdown
         for element in elements:
             btn = Button(text=element, size_hint_y=None, height=44)
@@ -917,7 +975,12 @@ class App(App):
             # Implement theme change logic here
             # For example, you could change the background color or sprite sheet
             self.change_theme()
-
+        elif btn.text == 'Vol+':
+            volume_up()
+        elif btn.text == 'Vol-':
+            volume_down()
+        elif btn.text == 'Mute':
+            toggle_mute()
 
         # Close the dropdown after processing
         dropdown1.dismiss()
