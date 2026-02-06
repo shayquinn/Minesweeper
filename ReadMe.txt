@@ -3,6 +3,8 @@ You need Python installed.
 You need the package venv installed.
 You need the package Kivy installed.
 
+![Demo](Screenshot.png)
+
 INSTALLATION
 ----------------------------------------------
 1. Ensure Python is installed.
