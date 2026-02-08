@@ -1,4 +1,11 @@
 from kivy.app import App
+from kivy.config import Config
+
+# Configure window BEFORE importing Window to prevent rescaling
+Config.set('graphics', 'width', '750')
+Config.set('graphics', 'height', '550')
+Config.set('graphics', 'resizable', False)
+Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
 from kivy.graphics.texture import TextureRegion
 from kivy.graphics import Rectangle, Color
@@ -10,7 +17,6 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.actionbar import ActionBar, ActionView, ActionLabel, ActionButton, ActionPrevious
 from kivy.core.audio import SoundLoader
-from kivy.config import Config
 from kivy.core.window import Window
 from kivy.core.image import Image as CoreImage
 from kivy.properties import ListProperty
@@ -728,15 +734,15 @@ def create_map(width, height, num_mines):
 
 class App(App):
     def build(self):
-       
-        Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
-        
         global sprite_size
         sprite_size = 25
         global num_rows
         num_rows = 20
         global num_cols
         num_cols = 30
+        
+        # Update window size for default level
+        Window.size = (num_cols * sprite_size, num_rows * sprite_size + 50)
 
 
         # Get the path to the images directory (assuming this file is in 'src')
@@ -761,7 +767,7 @@ class App(App):
         sound3_path = os.path.join(sounds_dir, 'punch-a-rock-161647.mp3')
         global sound3
         sound3 = SoundLoader.load(sound3_path)
-        sound3.volume = 0.3  # Half volume
+        sound3.volume = 0.15  # Lower volume
 
         sound4_path = os.path.join(sounds_dir, 'you-win-sequence-1-183948.mp3')
         global sound4
@@ -835,15 +841,14 @@ class App(App):
         # Remove grid_layout from its current parent
         if grid_layout is not None and grid_layout.parent is not None:
             grid_layout.parent.remove_widget(grid_layout)
-        grid_layout = FloatLayout(size=(sprite_size*num_cols, sprite_size*num_rows), size_hint_y=0.9)
+        grid_layout = FloatLayout(size=(sprite_size*num_cols, sprite_size*num_rows), size_hint=(None, None))
 
         sprite_grid = SpriteGrid(pos=(0, 0), size=grid_layout.size)
         grid_layout.add_widget(sprite_grid)
         root.add_widget(grid_layout)
 
-        # Set the size of the window to match the size of the sprite grid
-        Window.size = (grid_layout.width, grid_layout.height + action_bar.height)
-        Window.resizable = False
+        # Update the window size when changing levels
+        Window.size = (num_cols * sprite_size, num_rows * sprite_size + action_bar.height)
 
         
         global time_label
